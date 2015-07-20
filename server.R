@@ -9,41 +9,86 @@ time <- strftime(Sys.Date(),format = '%D')
 #next day time <- strftime(Sys.Date() + 1,format = '%D')
 time <- as.numeric(strsplit(time,'/')[[1]])
 time <- paste0(time[1],'#',time[2],'$')
-spec.no <- sqlQuery(ch,paste0("select \"F3\" from","\"",time,"\""))
+SpecDay <- sqlQuery(ch,paste0("select \"F3\" from","\"",time,"\""))
+SpecNight <- sqlQuery(ch,paste0("select \"F9\" from","\"",time,"\""))
 #只取排产部分
-spec.no <- as.character(spec.no[6:120,])
+SpecDay <- as.character(SpecDay[6:120,])
+SpecNight <- as.character(SpecNight[6:120,])
+
 FSR_names <- rep(paste0('FSR',1:12),each = 3)
 DRA_names <- rep(paste0('DRA',1:7),each = 5)
 VMI_names <- rep(paste0('VMI',1:11),each = 4)
+
 Machine <- c(FSR_names,DRA_names,VMI_names)
-dat1 <- data.frame(Machine = Machine,SPEC = spec.no,stringsAsFactors = FALSE)
-dat2 <- subset(dat1,!is.na(dat1['SPEC']))
-res <- vector(mode = 'list')
-res2 <- vector(mode = 'list')
+DayDat1 <- data.frame(Machine = Machine,SPEC = SpecDay,stringsAsFactors = FALSE)
+NightDat1 <- data.frame(Machine = Machine,SPEC = SpecNight,stringsAsFactors = FALSE)
+DayDat2 <- subset(DayDat1,!is.na(DayDat1['SPEC']))
+NightDat2 <- subset(NightDat1,!is.na(NightDat1['SPEC']))
+
+DayRes <- vector(mode = 'list')
+NightRes <- vector(mode = 'list')
 
 material.list <- c('Innerliner Code','1#Ply Code','2#Ply Code','BF code','Sidewall code','Tread code',
                    '1# Belt code','2# Belt code')
-for(x in 1:nrow(dat2)){
-  res[[x]] <- sqlQuery(summary_ch,paste('SELECT * ',"FROM \"CKT spec summary$\"","WHERE \"Spec_No\" = ",dat2['SPEC'][x,1]))[material.list]
-  if(nrow(res[[x]]) == 0){
-    res[[x]] <- as.data.frame(matrix(0,nrow = 1,ncol = 8))
+
+for(x in 1:nrow(DayDat2)){
+  DayRes[[x]] <- sqlQuery(summary_ch,paste('SELECT * ',"FROM \"CKT spec summary$\"","WHERE \"Spec_No\" = ",DayDat2['SPEC'][x,1]))[material.list]
+  print(nrow(DayRes[[x]]))
+  if(nrow(DayRes[[x]]) == 0){
+    DayRes[[x]] <- data.frame('Innerliner Code' = 'NULL',
+                              '1#Ply Code' = 'NULL',
+                              '2#Ply Code' = 'NULL',
+                              'BF code' = 'NULL',
+                              'Sidewall code' = 'NULL',
+                              'Tread code' = 'NULL',
+                              '1# Belt code' = 'NULL',
+                              '2# Belt code' = 'NULL')
+    colnames(DayRes[[x]]) <- c('Innerliner Code','1#Ply Code','2#Ply Code','BF code','Sidewall code','Tread code',
+                               '1# Belt code','2# Belt code')
   }
 }
-res <- do.call(rbind,res)
-#已经完整的数据结构
-dat3 <- cbind(dat2,res)
+
+for(x in 1:nrow(NightDat2)){
+  NightRes[[x]] <- sqlQuery(summary_ch,paste('SELECT * ',"FROM \"CKT spec summary$\"","WHERE \"Spec_No\" = ",NightDat2['SPEC'][x,1]))[material.list]
+  print(nrow(NightRes[[x]]))
+  if(nrow(NightRes[[x]]) == 0){
+    NightRes[[x]] <- data.frame('Innerliner Code' = 'NULL',
+                                '1#Ply Code' = 'NULL',
+                                '2#Ply Code' = 'NULL',
+                                'BF code' = 'NULL',
+                                'Sidewall code' = 'NULL',
+                                'Tread code' = 'NULL',
+                                '1# Belt code' = 'NULL',
+                                '2# Belt code' = 'NULL')
+    colnames(NightRes[[x]]) <- c('Innerliner Code','1#Ply Code','2#Ply Code','BF code','Sidewall code','Tread code',
+                                 '1# Belt code','2# Belt code')
+  }
+}
+
+DayRes <- do.call(rbind,DayRes)
+NightRes <- do.call(rbind,NightRes)
+
+DayDat <- cbind(DayDat2,DayRes)
+NightDat <- cbind(NightDat2,NightRes)
 ##server
 shinyServer(function(input, output){
   #table1
   output$table1 <- renderDataTable({
    select <- reactive(input$checkbox)
-   dat3[c('Machine','SPEC',select())]
+   DayDat[c('Machine','SPEC',select())]
   })
   #table
   output$table <- renderDataTable({
-    colnames(dat3) <- c('机台','SPEC','内面胶','1号帘布','2号帘布','三角胶','胎边','胎面','1层环带','2层环带')
-    dat3
+    colnames(DayDat) <- c('机台','SPEC','内面胶','1号帘布','2号帘布','三角胶','胎边','胎面','1层环带','2层环带')
+    DayDat
    },options = list(pageLength = 50))
+  #table_night
+  output$table_night <- renderDataTable({
+    select <- reactive(input$checkbox)
+    NightDat[c('Machine','SPEC',select())]
+  })
   odbcCloseAll()  
 })
   
+#runApp('d:/Articals/R/get_material_code/TBMMaterialCode/',host = getOption('shiny.host','0.0.0.0'))
+#http://10.150.198.133:4822
