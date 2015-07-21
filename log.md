@@ -23,3 +23,13 @@
 #### 7/20/2015 1:37:13 PM
 
 - 加入了夜班。
+
+---
+
+#### 7/21/2015 8:23:31 AM 
+
+- 增加了SNOW，BF code 修正为Bead code
+
+- add `reactiveTimer` 计时器 200 sec
+
+- add `withProcess` & current time
