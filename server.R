@@ -9,31 +9,39 @@ shinyServer(function(input, output,session){
   #timer fires.
   observe({
     ##channel
-    #path <- 'P:/Technical/Projects/CKT Spec Summary/CKT Spec Summary list 2.xls'
-    #summary_ch <- odbcConnectExcel2007(path,readOnly = TRUE)
-    withProgress(message = '正在连接数据源',value = 0.1,{
+    ##Make sure DSN IS FREE TO OPEN
+    withProgress(message = '正在连接数据源',
+                 detail = '可能需要花一段时间',
+                 value = 0.1,{
       summary_ch <- odbcConnect(dsn = 'CKT SPEC SUMMARY')
-      ch <- odbcConnectExcel2007("P:/Production/Schedule_Data/Sharepoint/生管/计划日报表/11年计划日报表汇总/TBM/Dec/TBM Daily Report-2015.xlsx")
+      ch <- odbcConnectExcel2007("P:/Production/Schedule_Data/Sharepoint/生管/计划日报表/11年计划日报表汇总/TBM/Dec/TBM Daily Report-2015.xlsx",
+                                 readOnly = TRUE)
     })
     
     time <- strftime(Sys.Date(),format = '%D')
     #next day time <- strftime(Sys.Date() + 1,format = '%D')
     time <- as.numeric(strsplit(time,'/')[[1]])
+    #sheet name of EXCEL endwith '$'
     time <- paste0(time[1],'#',time[2],'$')
-    
+    #columns names in EXCEL Begain with F
     SpecDay <- sqlQuery(ch,paste0("select \"F3\" from","\"",time,"\""))
     SpecNight <- sqlQuery(ch,paste0("select \"F9\" from","\"",time,"\""))
-    #只取排产部分
+    #Day shift & Nightshift
     SpecDay <- as.character(SpecDay[6:120,])
     SpecNight <- as.character(SpecNight[6:120,])
       
     FSR_names <- rep(paste0('FSR',1:12),each = 3)
     DRA_names <- rep(paste0('DRA',1:7),each = 5)
     VMI_names <- rep(paste0('VMI',1:11),each = 4)
-      
     Machine <- c(FSR_names,DRA_names,VMI_names)
-    DayDat1 <- data.frame(Machine = Machine,SPEC = SpecDay,stringsAsFactors = FALSE)
-    NightDat1 <- data.frame(Machine = Machine,SPEC = SpecNight,stringsAsFactors = FALSE)
+    
+    #Make sure str in data.frame not convert to factors
+    DayDat1 <- data.frame(Machine = Machine,
+                          SPEC = SpecDay,
+                          stringsAsFactors = FALSE)
+    NightDat1 <- data.frame(Machine = Machine,
+                            SPEC = SpecNight,
+                            stringsAsFactors = FALSE)
     DayDat2 <- subset(DayDat1,!is.na(DayDat1['SPEC']))
     NightDat2 <- subset(NightDat1,!is.na(NightDat1['SPEC']))
       
@@ -97,7 +105,7 @@ shinyServer(function(input, output,session){
   })
   #table
   output$table <- renderDataTable({
-    colnames(DayDat) <- c('机台','SPEC','内面胶','1号帘布','2号帘布','胎圈','胎边','胎面','1层环带','2层环带','SNOW')
+    colnames(DayDat) <- c('No.','SPEC','I.L','1 PLY','2 PLY','Bead','SW','TD','1 Belt','2 Belt','SNOW')
     DayDat
   },options = list(pageLength = 50))
   #table_night
@@ -111,6 +119,3 @@ shinyServer(function(input, output,session){
 #     paste(format(Sys.time(),'%H:%M:%S'))
 #   })
 })
-
-#runApp('d:/Articals/R/get_material_code/TBMMaterialCode/',host = getOption('shiny.host','0.0.0.0'))
-#http://10.150.198.133:xxxx
