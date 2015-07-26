@@ -6,10 +6,13 @@ shinyUI(fluidPage(
   
   headerPanel (h1("当日排产备料代码汇总"),windowTitle = '备料代码汇总'),
   
-  sidebarPanel(width = 3,
-               helpText('本程序由技术部提供',
+  sidebarPanel(width = 2,
+               helpText('本程序由',br(),
+                        '技术部',br(),
+                        '提供支持',
                         br(),
-                        '支持电话18260279625'
+                        em('Tel:',br(),
+                           '18260279625')
                         ),
                checkboxGroupInput("checkbox",
                                   choices = list('内面胶' = 'Innerliner Code',
@@ -17,7 +20,6 @@ shinyUI(fluidPage(
                                                  '2号帘布' = '2#Ply Code',
                                                  '胎圈' = 'Bead code',
                                                  '胎边' = 'Sidewall code',
-                                                 '胎面' = 'Tread code',
                                                  '1层环带' = '1# Belt code',
                                                  '2层环带' = '2# Belt code',
                                                  'SNOW' = 'SNOW code'),
@@ -27,7 +29,7 @@ shinyUI(fluidPage(
                actionButton("action", icon = icon('refresh'),label = "刷新")
                ),
   
-  mainPanel(width = 9,
+  mainPanel(width = 10,
     tabsetPanel(
       id = 'dataset',type = 'tabs',
       tabPanel('白班', icon = icon("list-alt"),dataTableOutput(outputId = 'table1')),

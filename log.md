@@ -33,3 +33,9 @@
 - add `reactiveTimer` 计时器 200 sec
 
 - add `withProcess` & current time
+
+---
+
+#### 7/23/2015 10:55:46 AM 
+
+- add schedule & delect td column

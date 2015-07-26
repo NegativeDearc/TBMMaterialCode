@@ -25,11 +25,17 @@ shinyServer(function(input, output,session){
     time <- paste0(time[1],'#',time[2],'$')
     #columns names in EXCEL Begain with F
     SpecDay <- sqlQuery(ch,paste0("select \"F3\" from","\"",time,"\""))
+    DaySchedule <- sqlQuery(ch,paste0("select \"F4\" from","\"",time,"\""))
     SpecNight <- sqlQuery(ch,paste0("select \"F9\" from","\"",time,"\""))
+    NightSchedule <- sqlQuery(ch,paste0("select \"F10\" from","\"",time,"\""))
+    
     #Day shift & Nightshift
     SpecDay <- as.character(SpecDay[6:120,])
     SpecNight <- as.character(SpecNight[6:120,])
-      
+    DaySchedule <- as.numeric(DaySchedule[6:120,])
+    NightSchedule <- as.character(NightSchedule[6:120,])
+    print(NightSchedule)
+    
     FSR_names <- rep(paste0('FSR',1:12),each = 3)
     DRA_names <- rep(paste0('DRA',1:7),each = 5)
     VMI_names <- rep(paste0('VMI',1:11),each = 4)
@@ -38,9 +44,11 @@ shinyServer(function(input, output,session){
     #Make sure str in data.frame not convert to factors
     DayDat1 <- data.frame(Machine = Machine,
                           SPEC = SpecDay,
+                          Schedule = DaySchedule,
                           stringsAsFactors = FALSE)
     NightDat1 <- data.frame(Machine = Machine,
                             SPEC = SpecNight,
+                            Schedule = NightSchedule,
                             stringsAsFactors = FALSE)
     DayDat2 <- subset(DayDat1,!is.na(DayDat1['SPEC']))
     NightDat2 <- subset(NightDat1,!is.na(NightDat1['SPEC']))
@@ -48,7 +56,7 @@ shinyServer(function(input, output,session){
     DayRes <- vector(mode = 'list')
     NightRes <- vector(mode = 'list')
       
-    material.list <- c('Innerliner Code','1#Ply Code','2#Ply Code','Bead code','Sidewall code','Tread code',
+    material.list <- c('Innerliner Code','1#Ply Code','2#Ply Code','Bead code','Sidewall code',
                          '1# Belt code','2# Belt code','SNOW code')
       
     for(x in 1:nrow(DayDat2)){
@@ -60,11 +68,10 @@ shinyServer(function(input, output,session){
                                   '2#Ply Code' = 'NULL',
                                   'Bead code' = 'NULL',
                                   'Sidewall code' = 'NULL',
-                                  'Tread code' = 'NULL',
                                   '1# Belt code' = 'NULL',
                                   '2# Belt code' = 'NULL',
                                   'SNOW code' = 'NULL')
-        colnames(DayRes[[x]]) <- c('Innerliner Code','1#Ply Code','2#Ply Code','Bead code','Sidewall code','Tread code',
+        colnames(DayRes[[x]]) <- c('Innerliner Code','1#Ply Code','2#Ply Code','Bead code','Sidewall code',
                                     '1# Belt code','2# Belt code','SNOW code')
       }
     }
@@ -78,11 +85,10 @@ shinyServer(function(input, output,session){
                                     '2#Ply Code' = 'NULL',
                                     'Bead code' = 'NULL',
                                     'Sidewall code' = 'NULL',
-                                    'Tread code' = 'NULL',
                                     '1# Belt code' = 'NULL',
                                     '2# Belt code' = 'NULL',
                                     'SNOW code' = 'NULL')
-        colnames(NightRes[[x]]) <- c('Innerliner Code','1#Ply Code','2#Ply Code','BF code','Sidewall code','Tread code',
+        colnames(NightRes[[x]]) <- c('Innerliner Code','1#Ply Code','2#Ply Code','BF code','Sidewall code',
                                       '1# Belt code','2# Belt code','SNOW code')
       }
     }
@@ -101,17 +107,17 @@ shinyServer(function(input, output,session){
   #table1
   output$table1 <- renderDataTable({
     select <- reactive(input$checkbox)
-    DayDat[c('Machine','SPEC',select())]
+    DayDat[c('Machine','SPEC','Schedule',select())]
   })
   #table
   output$table <- renderDataTable({
-    colnames(DayDat) <- c('No.','SPEC','I.L','1 PLY','2 PLY','Bead','SW','TD','1 Belt','2 Belt','SNOW')
+    colnames(DayDat) <- c('No.','SPEC','$','I.L','1P','2P','Bead','SW','1B','2B','SNOW')
     DayDat
   },options = list(pageLength = 50))
   #table_night
   output$table_night <- renderDataTable({
     select <- reactive(input$checkbox)
-    NightDat[c('Machine','SPEC',select())]
+    NightDat[c('Machine','SPEC','Schedule',select())]
   })
   #time
 #   output$currentTime <- renderText({
