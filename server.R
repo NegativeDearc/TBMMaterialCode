@@ -1,8 +1,14 @@
-library(shiny)
-library(RODBC)
-
+if(!require('shiny')) {
+  install.packages('shiny')
+}
+if (!require('RODBC')) {
+  install.packages('RODBC')
+}
+if (!require('networkD3')) {
+  install.packages('networkD3')
+}
 ##server
-shinyServer(function(input, output,session){
+shinyServer(function(input, output,session) {
   #every 200 seconds.
   autoInvalidate <- reactiveTimer(200000, session)
   #Invalidate and re-execute this reactive expression every time the
@@ -13,10 +19,17 @@ shinyServer(function(input, output,session){
     withProgress(message = '正在连接数据源',
                  detail = '可能需要花一段时间',
                  value = 0.1,{
-      summary_ch <- odbcConnect(dsn = 'CKT SPEC SUMMARY')
-      ch <- odbcConnectExcel2007("P:/Production/Schedule_Data/Sharepoint/生管/计划日报表/11年计划日报表汇总/TBM/Dec/TBM Daily Report-2015.xlsx",
-                                 readOnly = TRUE)
-    })
+                   summary_ch <-
+                     odbcConnectExcel2007(
+                       '/\\ksa008/shared/Technical/Projects/CKT Spec Summary/Copy of CKT Spec Summary list 2 .xlsx',
+                       readOnly = TRUE
+                     )
+                   ch <-
+                     odbcConnectExcel2007(
+                       "/\\ksa008/shared/Production/Schedule_Data/Sharepoint/生管/计划日报表/11年计划日报表汇总/TBM/Dec/TBM Daily Report-2015.xlsx",
+                       readOnly = TRUE
+                     )
+                 })
     
     time <- strftime(Sys.Date(),format = '%D')
     #next day time <- strftime(Sys.Date() + 1,format = '%D')
@@ -24,17 +37,20 @@ shinyServer(function(input, output,session){
     #sheet name of EXCEL endwith '$'
     time <- paste0(time[1],'#',time[2],'$')
     #columns names in EXCEL Begain with F
-    SpecDay <- sqlQuery(ch,paste0("select \"F3\" from","\"",time,"\""))
-    DaySchedule <- sqlQuery(ch,paste0("select \"F4\" from","\"",time,"\""))
-    SpecNight <- sqlQuery(ch,paste0("select \"F9\" from","\"",time,"\""))
-    NightSchedule <- sqlQuery(ch,paste0("select \"F10\" from","\"",time,"\""))
+    SpecDay <-
+      sqlQuery(ch,paste0("select \"F3\" from","\"",time,"\""))
+    DaySchedule <-
+      sqlQuery(ch,paste0("select \"F4\" from","\"",time,"\""))
+    SpecNight <-
+      sqlQuery(ch,paste0("select \"F9\" from","\"",time,"\""))
+    NightSchedule <-
+      sqlQuery(ch,paste0("select \"F10\" from","\"",time,"\""))
     
     #Day shift & Nightshift
     SpecDay <- as.character(SpecDay[6:120,])
     SpecNight <- as.character(SpecNight[6:120,])
-    DaySchedule <- as.numeric(DaySchedule[6:120,])
+    DaySchedule <- as.character(DaySchedule[6:120,])
     NightSchedule <- as.character(NightSchedule[6:120,])
-    print(NightSchedule)
     
     FSR_names <- rep(paste0('FSR',1:12),each = 3)
     DRA_names <- rep(paste0('DRA',1:7),each = 5)
@@ -42,67 +58,106 @@ shinyServer(function(input, output,session){
     Machine <- c(FSR_names,DRA_names,VMI_names)
     
     #Make sure str in data.frame not convert to factors
-    DayDat1 <- data.frame(Machine = Machine,
-                          SPEC = SpecDay,
-                          Schedule = DaySchedule,
-                          stringsAsFactors = FALSE)
-    NightDat1 <- data.frame(Machine = Machine,
-                            SPEC = SpecNight,
-                            Schedule = NightSchedule,
-                            stringsAsFactors = FALSE)
+    DayDat1 <- data.frame(
+      Machine = Machine,
+      SPEC = SpecDay,
+      Schedule = DaySchedule,
+      stringsAsFactors = FALSE
+    )
+    NightDat1 <- data.frame(
+      Machine = Machine,
+      SPEC = SpecNight,
+      Schedule = NightSchedule,
+      stringsAsFactors = FALSE
+    )
+    
     DayDat2 <- subset(DayDat1,!is.na(DayDat1['SPEC']))
     NightDat2 <- subset(NightDat1,!is.na(NightDat1['SPEC']))
-      
+    
     DayRes <- vector(mode = 'list')
     NightRes <- vector(mode = 'list')
-      
-    material.list <- c('Innerliner Code','1#Ply Code','2#Ply Code','Bead code','Sidewall code',
-                         '1# Belt code','2# Belt code','SNOW code')
-      
-    for(x in 1:nrow(DayDat2)){
-      DayRes[[x]] <- sqlQuery(summary_ch,paste('SELECT * ',"FROM \"CKT spec summary$\"","WHERE \"Spec_No\" = ",DayDat2['SPEC'][x,1]))[material.list]
-      print(nrow(DayRes[[x]]))
-      if(nrow(DayRes[[x]]) == 0){
-        DayRes[[x]] <- data.frame('Innerliner Code' = 'NULL',
-                                  '1#Ply Code' = 'NULL',
-                                  '2#Ply Code' = 'NULL',
-                                  'Bead code' = 'NULL',
-                                  'Sidewall code' = 'NULL',
-                                  '1# Belt code' = 'NULL',
-                                  '2# Belt code' = 'NULL',
-                                  'SNOW code' = 'NULL')
-        colnames(DayRes[[x]]) <- c('Innerliner Code','1#Ply Code','2#Ply Code','Bead code','Sidewall code',
-                                    '1# Belt code','2# Belt code','SNOW code')
-      }
-    }
-      
-    for(x in 1:nrow(NightDat2)){
-      NightRes[[x]] <- sqlQuery(summary_ch,paste('SELECT * ',"FROM \"CKT spec summary$\"","WHERE \"Spec_No\" = ",NightDat2['SPEC'][x,1]))[material.list]
-      print(nrow(NightRes[[x]]))
-      if(nrow(NightRes[[x]]) == 0){
-        NightRes[[x]] <- data.frame('Innerliner Code' = 'NULL',
-                                    '1#Ply Code' = 'NULL',
-                                    '2#Ply Code' = 'NULL',
-                                    'Bead code' = 'NULL',
-                                    'Sidewall code' = 'NULL',
-                                    '1# Belt code' = 'NULL',
-                                    '2# Belt code' = 'NULL',
-                                    'SNOW code' = 'NULL')
-        colnames(NightRes[[x]]) <- c('Innerliner Code','1#Ply Code','2#Ply Code','BF code','Sidewall code',
-                                      '1# Belt code','2# Belt code','SNOW code')
-      }
-    }
-
     
+    material.list <-
+      c(
+        'Innerliner Code','1#Ply Code','2#Ply Code','Bead code','Sidewall code',
+        '1# Belt code','2# Belt code','SNOW code'
+      )
+    
+    for (x in 1:nrow(DayDat2)) {
+      DayRes[[x]] <-
+        sqlQuery(
+          summary_ch,paste(
+            'SELECT * ',"FROM \"CKT spec summary$\"","WHERE \"Spec_No\" = ",DayDat2['SPEC'][x,1]
+          )
+        )[material.list]
+      if (nrow(DayRes[[x]]) == 0) {
+        DayRes[[x]] <- data.frame(
+          'Innerliner Code' = 'NULL',
+          '1#Ply Code' = 'NULL',
+          '2#Ply Code' = 'NULL',
+          'Bead code' = 'NULL',
+          'Sidewall code' = 'NULL',
+          '1# Belt code' = 'NULL',
+          '2# Belt code' = 'NULL',
+          'SNOW code' = 'NULL'
+        )
+        colnames(DayRes[[x]]) <- material.list
+      }
+    }
+    
+    for (x in 1:nrow(NightDat2)) {
+      NightRes[[x]] <-
+        sqlQuery(
+          summary_ch,paste(
+            'SELECT * ',"FROM \"CKT spec summary$\"","WHERE \"Spec_No\" = ",NightDat2['SPEC'][x,1]
+          )
+        )[material.list]
+      if (nrow(NightRes[[x]]) == 0) {
+        NightRes[[x]] <- data.frame(
+          'Innerliner Code' = 'NULL',
+          '1#Ply Code' = 'NULL',
+          '2#Ply Code' = 'NULL',
+          'Bead code' = 'NULL',
+          'Sidewall code' = 'NULL',
+          '1# Belt code' = 'NULL',
+          '2# Belt code' = 'NULL',
+          'SNOW code' = 'NULL'
+        )
+        colnames(NightRes[[x]]) <- material.list
+      }
+    }
     
     DayRes <- do.call(rbind,DayRes)
     NightRes <- do.call(rbind,NightRes)
     
     DayDat <<- cbind(DayDat2,DayRes)
     NightDat <<- cbind(NightDat2,NightRes)
-    odbcCloseAll()
     
     autoInvalidate()
+    cat('Data Prepare Ready...\n')
+  })
+  #download handler
+  output$download <-
+    downloadHandler(
+      filename = function() {
+        paste(format(Sys.time(),'%y%m%d%H%M%S'),input$dataset,'.csv',sep = '')
+      },
+      content = function(file) {
+        ##add tabPanel day/night here
+        select <-
+          reactive(input$checkbox)
+        if (input$dataset == 'day') {
+          write.csv(DayDat[c('Machine','SPEC','Schedule',select())],file)
+        } else {
+          write.csv(NightDat[c('Machine','SPEC','Schedule',select())],file)
+        }
+      }
+    )
+  #networkD3
+  output$network <- renderSimpleNetwork({
+    simpleNetwork(
+      DayDat,'Machine','1#Ply Code',fontSize = 14,nodeColour = 'orange',zoom = TRUE
+    )
   })
   #table1
   output$table1 <- renderDataTable({
@@ -111,7 +166,8 @@ shinyServer(function(input, output,session){
   })
   #table
   output$table <- renderDataTable({
-    colnames(DayDat) <- c('No.','SPEC','$','I.L','1P','2P','Bead','SW','1B','2B','SNOW')
+    colnames(DayDat) <-
+      c('No.','SPEC','$','I.L','1P','2P','Bead','SW','1B','2B','SNOW')
     DayDat
   },options = list(pageLength = 50))
   #table_night
@@ -119,9 +175,4 @@ shinyServer(function(input, output,session){
     select <- reactive(input$checkbox)
     NightDat[c('Machine','SPEC','Schedule',select())]
   })
-  #time
-#   output$currentTime <- renderText({
-#     invalidateLater(1000,session)
-#     paste(format(Sys.time(),'%H:%M:%S'))
-#   })
 })
