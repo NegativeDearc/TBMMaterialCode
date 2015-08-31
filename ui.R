@@ -1,67 +1,91 @@
-if(!require('shiny')) {
-  install.packages('shiny')
-}
-if (!require('RODBC')) {
-  install.packages('RODBC')
-}
-if (!require('networkD3')) {
-  install.packages('networkD3')
-}
+library(shiny)
 
-#shinyUI(pageWithSidebar(
 shinyUI(fluidPage(
-  headerPanel (h1("当日排产备料代码汇总"),windowTitle = '备料代码汇总'),
-  
-  sidebarPanel(
-    width = 2,
-    helpText(
-      '本程序由',br(),
-      '技术部',br(),
-      '提供支持',
-      br(),
-      em('Tel:',br(),
-         '18260279625')
-    ),
-    checkboxGroupInput(
-      "checkbox",
-      choices = list(
-        '内面胶' = 'Innerliner Code',
-        '1号帘布' = '1#Ply Code',
-        '2号帘布' = '2#Ply Code',
-        '胎圈' = 'Bead code',
-        '胎边' = 'Sidewall code',
-        '1层环带' = '1# Belt code',
-        '2层环带' = '2# Belt code',
-        'SNOW' = 'SNOW code'
-      ),
-      label = '请选择项目(可多选)'
-    ),
-    downloadButton('download',label = '下载')
-  ),
-  
-  mainPanel(
-    width = 10,
-    tabsetPanel(
-      id = 'dataset',type = 'tabs',
-      tabPanel(
-        '白班', icon = icon("list-alt"),value = 'day',dataTableOutput(outputId = 'table1')
-      ),
-      tabPanel(
-        '夜班',icon = icon("list-alt"),value = 'night',dataTableOutput(outputId = 'table_night')
-      ),
-      tabPanel('白班汇总', icon = icon("list-alt"),dataTableOutput(outputId = 'table')),
-      tabPanel(
-        'NetworkD3',icon = icon('file-image-o'),simpleNetworkOutput(outputId = 'network')
-      ),
-      tabPanel(
-        '作者',icon = icon('user'),
-        h5(
-          "作者: 技术部Sheldon",br(),
-          "如遇到程序bug或者建议点击发送邮件",
-          a(href = "mailto:sxchen@coopertire.com&Subject=feedback","点这里")
-        )
-      )
-    )
+  #title
+  titlePanel(strong('TBM WIP Code Summary'),windowTitle = 'WIP Code'),
+  #tabset
+  tabsetPanel(id = 'tab',
+              tabPanel('Dayshift',value = 'Dayshift',icon = icon('sun-o'),
+                       #fluidpage with fluidpage
+                       fluidPage(
+                         hr(),
+                         sidebarPanel(
+                           width = 2,
+                           helpText(
+                             '本程序由',br(),
+                             strong('技术部'),br(),
+                             '提供支持',
+                             br(),
+                             em('Tel:',br(),
+                                '18260279625')
+                           ),
+                           checkboxGroupInput(
+                             "checkbox1",
+                             choices = list(
+                               '内面胶' = 'Innerliner Code',
+                               '1号帘布' = '1#Ply Code',
+                               '2号帘布' = '2#Ply Code',
+                               '胎圈' = 'Bead code',
+                               '胎边' = 'Sidewall code',
+                               '1层环带' = '1# Belt code',
+                               '2层环带' = '2# Belt code',
+                               'SNOW' = 'SNOW code'
+                             ),
+                             label = '请选择项目(可多选)'
+                           ),
+                           downloadButton('download_day',label = '下载')
+                         ),
+                         mainPanel(
+                           #sub tabset
+                           tabsetPanel(id = 'day',
+                             tabPanel('FSR',value = 'day_FSR',icon = icon('list-alt'),dataTableOutput('day_FSR')),
+                             tabPanel('DRA',value = 'day_DRA',icon = icon('list-alt'),dataTableOutput('day_DRA')),
+                             tabPanel('VMI',value = 'day_VMI',icon = icon('list-alt'),dataTableOutput('day_VMI'))
+                           )
+                         )
+                       )
+              ),
+              tabPanel('Nightshift',value = 'Nightshift',icon = icon('moon-o'),
+                       fluidPage(
+                         hr(),
+                         sidebarPanel(
+                           width = 2,
+                           helpText(
+                             '本程序由',br(),
+                             '技术部',br(),
+                             '提供支持',
+                             br(),
+                             em('Tel:',br(),
+                                '18260279625')
+                           ),
+                           checkboxGroupInput(
+                             "checkbox2",
+                             choices = list(
+                               '内面胶' = 'Innerliner Code',
+                               '1号帘布' = '1#Ply Code',
+                               '2号帘布' = '2#Ply Code',
+                               '胎圈' = 'Bead code',
+                               '胎边' = 'Sidewall code',
+                               '1层环带' = '1# Belt code',
+                               '2层环带' = '2# Belt code',
+                               'SNOW' = 'SNOW code'
+                             ),
+                             label = '请选择项目(可多选)'
+                           ),
+                           downloadButton('download_night',label = '下载')
+                         ),
+                         mainPanel(
+                           #sub tabset
+                           tabsetPanel(id = 'night',
+                             tabPanel('FSR',value = 'night_FSR',icon = icon('list-alt'),dataTableOutput('night_FSR')),
+                             tabPanel('DRA',value = 'night_DRA',icon = icon('list-alt'),dataTableOutput('night_DRA')),
+                             tabPanel('VMI',value = 'night_VMI',icon = icon('list-alt'),dataTableOutput('night_VMI'))
+                           )
+                         )
+                       )
+              ),
+              tabPanel('DaySummary',value = 'tab3',icon = icon('list-ol'),dataTableOutput('summary')),
+              tabPanel('NetworkD3',value = 'network',icon = icon('line-chart'),simpleNetworkOutput('network'))
+              
   )
-)
-)
+))
