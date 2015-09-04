@@ -1,19 +1,28 @@
-library(shiny)
+﻿if(!require('shiny')) {
+  install.packages('shiny')
+}
+if (!require('RODBC')) {
+  install.packages('RODBC')
+}
+#simpleNetworkOutput from package 'networkD3'
+#library it before use
+if (!require('networkD3')) {
+  install.packages('networkD3')
+}
 
 shinyUI(fluidPage(
-  #title
   titlePanel(strong('TBM WIP Code Summary'),windowTitle = 'WIP Code'),
-  #tabset
   tabsetPanel(id = 'tab',
               tabPanel('Dayshift',value = 'Dayshift',icon = icon('sun-o'),
-                       #fluidpage with fluidpage
+                       #######################################################################
+                       #fluid page with fluid page
                        fluidPage(
                          hr(),
                          sidebarPanel(
                            width = 2,
                            helpText(
-                             '本程序由',br(),
-                             strong('技术部'),br(),
+                             '本程序由',
+                             strong('技术部'),
                              '提供支持',
                              br(),
                              em('Tel:',br(),
@@ -29,14 +38,16 @@ shinyUI(fluidPage(
                                '胎边' = 'Sidewall code',
                                '1层环带' = '1# Belt code',
                                '2层环带' = '2# Belt code',
-                               'SNOW' = 'SNOW code'
+                               'SNOW' = 'SNOW code',
+                               'Tread' = 'Tread code'
                              ),
                              label = '请选择项目(可多选)'
                            ),
-                           downloadButton('download_day',label = '下载')
+                           downloadButton('download_day',label = '下载'),
+                           hr(),
+                           downloadButton('sw_day',label = 'Sidewall')
                          ),
                          mainPanel(
-                           #sub tabset
                            tabsetPanel(id = 'day',
                              tabPanel('FSR',value = 'day_FSR',icon = icon('list-alt'),dataTableOutput('day_FSR')),
                              tabPanel('DRA',value = 'day_DRA',icon = icon('list-alt'),dataTableOutput('day_DRA')),
@@ -44,15 +55,18 @@ shinyUI(fluidPage(
                            )
                          )
                        )
+                       ########################################################################
               ),
               tabPanel('Nightshift',value = 'Nightshift',icon = icon('moon-o'),
+                       ########################################################################
+                       #fluid page with fluid page
                        fluidPage(
                          hr(),
                          sidebarPanel(
                            width = 2,
                            helpText(
-                             '本程序由',br(),
-                             '技术部',br(),
+                             '本程序由',
+                             strong('技术部'),
                              '提供支持',
                              br(),
                              em('Tel:',br(),
@@ -68,14 +82,16 @@ shinyUI(fluidPage(
                                '胎边' = 'Sidewall code',
                                '1层环带' = '1# Belt code',
                                '2层环带' = '2# Belt code',
-                               'SNOW' = 'SNOW code'
+                               'SNOW' = 'SNOW code',
+                               'Tread' = 'Tread code'
                              ),
                              label = '请选择项目(可多选)'
                            ),
-                           downloadButton('download_night',label = '下载')
+                           downloadButton('download_night',label = '下载'),
+                           hr(),
+                           downloadButton('sw_ningth','Sidewall')
                          ),
                          mainPanel(
-                           #sub tabset
                            tabsetPanel(id = 'night',
                              tabPanel('FSR',value = 'night_FSR',icon = icon('list-alt'),dataTableOutput('night_FSR')),
                              tabPanel('DRA',value = 'night_DRA',icon = icon('list-alt'),dataTableOutput('night_DRA')),
@@ -83,6 +99,7 @@ shinyUI(fluidPage(
                            )
                          )
                        )
+                      ########################################################################
               ),
               tabPanel('DaySummary',value = 'tab3',icon = icon('list-ol'),dataTableOutput('summary')),
               tabPanel('NetworkD3',value = 'network',icon = icon('line-chart'),simpleNetworkOutput('network'))
