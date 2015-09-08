@@ -18,6 +18,7 @@ shinyUI(fluidPage(
                        #fluid page with fluid page
                        fluidPage(
                          hr(),
+                         dateInput('date',label = 'Only Use for Nightshift(EXPERIMENTAL)',min = Sys.Date(),max = Sys.Date()+1,format = 'yyyy-mm-dd'),
                          sidebarPanel(
                            width = 2,
                            helpText(
