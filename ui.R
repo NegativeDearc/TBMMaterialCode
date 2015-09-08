@@ -89,7 +89,7 @@ shinyUI(fluidPage(
                            ),
                            downloadButton('download_night',label = '下载'),
                            hr(),
-                           downloadButton('sw_ningth','Sidewall')
+                           downloadButton('sw_night','Sidewall')
                          ),
                          mainPanel(
                            tabsetPanel(id = 'night',
