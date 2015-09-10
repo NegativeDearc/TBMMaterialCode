@@ -1,4 +1,4 @@
-﻿if(!require('shiny')) {
+if(!require('shiny')) {
   install.packages('shiny')
 }
 if (!require('RODBC')) {
@@ -9,24 +9,19 @@ if (!require('networkD3')) {
 }
 ##server
 shinyServer(function(input, output,session) {
-  #every 1000 seconds.
-  autoInvalidate <- reactiveTimer(1000000, session)
+  #every 1200 seconds.
+  autoInvalidate <- reactiveTimer(1200000, session)
   #Invalidate and re-execute this reactive expression every time the
   #timer fires.
   observe({
     #odbc channels
     #Make sure DSN IS FREE TO OPEN and have enough permission
-    withProgress(message = '正在连接数据源',
-                 detail = '可能需要花一段时间',
+    withProgress(message = 'Connecting to data sources...\n',
+                 detail = 'May take a little while.',
                  value = 25,{
                    summary_ch <-
                      odbcConnectExcel2007(
-                       '/\\ksa008/shared/Technical/Projects/CKT Spec Summary/Copy of CKT Spec Summary list 2 .xlsx',
-                       readOnly = TRUE
-                     )
-                   ch <-
-                     odbcConnectExcel2007(
-                       "/\\ksa008/shared/Production/Schedule_Data/Sharepoint/生管/计划日报表/15年计划日报表汇总/TBM/TBM plan/TBM Daily Report-2015(Sep).xlsx",
+                       '/\\ksa008/shared/Technical/Projects/CKT Spec Summary/CKT Spec Summary list 2_Sheldon.xlsx',
                        readOnly = TRUE
                      )
                    #This file is a shared EXCEL,when the editor trying to save and mean time 
@@ -34,9 +29,22 @@ shinyServer(function(input, output,session) {
                    #'The cell is locked,try this command later.'
                    #So add a while Loop,sleep 15 seconds to let the file save successful.
                    #If 15 sec is not enough,edit it when needed.
-                   while(ch == -1L){
-                     Sys.sleep(15)
-                     odbcReConnect(ch)
+                   bool = 1
+                   while(bool){
+                     tryCatch(ch <- odbcConnectExcel2007(
+                       "/\\ksa008/shared/Production/Schedule_Data/Sharepoint/生管/计划日报表/15年计划日报表汇总/TBM/TBM plan/TBM Daily Report-2015(Sep).xlsx",
+                       readOnly = TRUE
+                     ),
+                     error = function(e){
+                       cat(conditionMessage(e),'\n')
+                       odbcCloseAll()
+                       for(i in 15:1){
+                         Sys.sleep(1)
+                         cat('System will recover',i,'..seconds later.\n')
+                       }})
+                     if(ch != -1L){
+                       bool = 0
+                     }
                    }
                  })
     
@@ -105,15 +113,15 @@ shinyServer(function(input, output,session) {
         )[material.list]
       if (nrow(DayRes[[x]]) == 0) {
         DayRes[[x]] <- data.frame(
-          'Innerliner Code' = 'NULL',
-          '1#Ply Code' = 'NULL',
-          '2#Ply Code' = 'NULL',
-          'Bead code' = 'NULL',
-          'Sidewall code' = 'NULL',
-          '1# Belt code' = 'NULL',
-          '2# Belt code' = 'NULL',
-          'SNOW code' = 'NULL',
-          'Tread code' = 'NULL'
+          'Innerliner Code' = '',
+          '1#Ply Code' = '',
+          '2#Ply Code' = '',
+          'Bead code' = '',
+          'Sidewall code' = '',
+          '1# Belt code' = '',
+          '2# Belt code' = '',
+          'SNOW code' = '',
+          'Tread code' = ''
         )
         colnames(DayRes[[x]]) <- material.list
       }
@@ -128,15 +136,15 @@ shinyServer(function(input, output,session) {
         )[material.list]
       if (nrow(NightRes[[x]]) == 0) {
         NightRes[[x]] <- data.frame(
-          'Innerliner Code' = 'NULL',
-          '1#Ply Code' = 'NULL',
-          '2#Ply Code' = 'NULL',
-          'Bead code' = 'NULL',
-          'Sidewall code' = 'NULL',
-          '1# Belt code' = 'NULL',
-          '2# Belt code' = 'NULL',
-          'SNOW code' = 'NULL',
-          'Tread code' = 'NULL'
+          'Innerliner Code' = '',
+          '1#Ply Code' = '',
+          '2#Ply Code' = '',
+          'Bead code' = '',
+          'Sidewall code' = '',
+          '1# Belt code' = '',
+          '2# Belt code' = '',
+          'SNOW code' = '',
+          'Tread code' = ''
         )
         colnames(NightRes[[x]]) <- material.list
       }
@@ -153,7 +161,7 @@ shinyServer(function(input, output,session) {
     NightDat <<- cbind(NightDat2,NightRes)
     
     autoInvalidate()
-    cat('Data Prepare Ready...\n')
+    cat('Data Prepare Ready...\n',format(Sys.time(),'%m%d%H%M%S'),'\n')
   })
   #select box
   select2 <-
@@ -176,6 +184,7 @@ shinyServer(function(input, output,session) {
       },
       content = function(file) {
         write.csv(rbind(df,dv)[c('Machine','SPEC','Schedule','Sidewall code')],file)
+        write.table(Sys.time(),file,append = TRUE,col.names = FALSE)
       }
     )
   
@@ -186,6 +195,7 @@ shinyServer(function(input, output,session) {
       },
       content = function(file) {
         write.csv(rbind(nf,nv)[c('Machine','SPEC','Schedule','Sidewall code')],file)
+        write.table(Sys.time(),file,append = TRUE,col.names = FALSE)
       }
     )
   #download handler
@@ -198,12 +208,15 @@ shinyServer(function(input, output,session) {
         ##add tabPanel day/night here
         if (input$day == 'day_FSR') {
           write.csv(df[c('Machine','SPEC','Schedule',select1())],file)
+          write.table(Sys.time(),file,append = TRUE,col.names = FALSE)
         } 
         if (input$day == 'day_DRA'){
           write.csv(dd[c('Machine','SPEC','Schedule',select1())],file)
+          write.table(Sys.time(),file,append = TRUE,col.names = FALSE)
         }
         if (input$day == 'day_VMI'){
           write.csv(dv[c('Machine','SPEC','Schedule',select1())],file)
+          write.table(Sys.time(),file,append = TRUE,col.names = FALSE)
         }
       }
     )
@@ -217,12 +230,15 @@ shinyServer(function(input, output,session) {
         ##add tabPanel day/night here
         if (input$night == 'night_FSR') {
           write.csv(nf[c('Machine','SPEC','Schedule',select2())],file)
+          write.table(Sys.time(),file,append = TRUE,col.names = FALSE)
         } 
         if (input$night == 'night_DRA'){
           write.csv(nd[c('Machine','SPEC','Schedule',select2())],file)
+          write.table(Sys.time(),file,append = TRUE,col.names = FALSE)
         }
         if (input$night == 'night_VMI'){
           write.csv(nv[c('Machine','SPEC','Schedule',select2())],file)
+          write.table(Sys.time(),file,append = TRUE,col.names = FALSE)
         }
       }
     )

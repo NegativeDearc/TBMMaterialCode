@@ -1,4 +1,4 @@
-﻿if(!require('shiny')) {
+if(!require('shiny')) {
   install.packages('shiny')
 }
 if (!require('RODBC')) {
