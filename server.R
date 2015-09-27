@@ -9,8 +9,8 @@ if (!require('networkD3')) {
 }
 ##server
 shinyServer(function(input, output,session) {
-  #every 1200 seconds.
-  autoInvalidate <- reactiveTimer(1200000, session)
+  #every 1800 seconds.
+  autoInvalidate <- reactiveTimer(1800000, session)
   #Invalidate and re-execute this reactive expression every time the
   #timer fires.
   observe({
@@ -28,17 +28,17 @@ shinyServer(function(input, output,session) {
                    #the odbc connector is connected.File will failed to save with error
                    #'The cell is locked,try this command later.'
                    #So add a while Loop,sleep 15 seconds to let the file save successful.
-                   #If 15 sec is not enough,edit it when needed.
                    bool = 1
                    while(bool){
-                     tryCatch(ch <- odbcConnectExcel2007(
-                       "/\\ksa008/shared/Production/Schedule_Data/Sharepoint/生管/计划日报表/15年计划日报表汇总/TBM/TBM plan/TBM Daily Report-2015(Sep).xlsx",
-                       readOnly = TRUE
+                     tryCatch(
+                       ch <- odbcConnectExcel2007(
+                            '/\\ksa008/shared/Technical/Projects/CKT Spec Summary/CKT Spec Summary list 2_Sheldon.xlsx',
+                            readOnly = TRUE
                      ),
                      error = function(e){
                        cat(conditionMessage(e),'\n')
                        odbcCloseAll()
-                       for(i in 15:1){
+                       for(i in 12:1){
                          Sys.sleep(1)
                          cat('System will recover',i,'..seconds later.\n')
                        }})
@@ -54,18 +54,31 @@ shinyServer(function(input, output,session) {
     #sheet name of EXCEL endwith '$'
     time <- paste0(time[1],'#',time[2],'$')
     #columns names in EXCEL Begain with F
-    SpecDay <-
-      sqlQuery(ch,paste0("select \"F3\" from","\"",time,"\""))
-    DaySchedule <-
-      sqlQuery(ch,paste0("select \"F4\" from","\"",time,"\""))
-    SpecNight <-
-      sqlQuery(ch,paste0("select \"F9\" from","\"",time,"\""))
-    NightSchedule <-
-      sqlQuery(ch,paste0("select \"F10\" from","\"",time,"\""))
+    test <- sqlQuery(ch,paste0("select \"F1\" from","\"",time,"\""))
+    #if the sheet doesn't exist,the App will shut down.
+    #So,add a if logic,if the sheet is exist,we will get data.frame from it.
+    #Else we make some fake data to keep web alive
+    if(is.data.frame(test)){
+      SpecDay <-
+        sqlQuery(ch,paste0("select \"F3\" from","\"",time,"\""))
+      DaySchedule <-
+        sqlQuery(ch,paste0("select \"F4\" from","\"",time,"\""))
+      SpecNight <-
+        sqlQuery(ch,paste0("select \"F9\" from","\"",time,"\""))
+      NightSchedule <-
+        sqlQuery(ch,paste0("select \"F10\" from","\"",time,"\""))
+    } else {
+      t <- data.frame(t = rep('9999',120))
+      SpecDay <- DaySchedule <- SpecNight <- NightSchedule <- t
+    }
     
     #Day shift & Nightshift
-    SpecDay <- as.character(SpecDay[6:120,])
-    SpecNight <- as.character(SpecNight[6:120,])
+    SpecDay <- as.numeric(as.character(SpecDay[6:120,]))
+    #debug 2015-9-21
+    #SpecNight is a collect of number,
+    #if the programm scap some non-number values like chinese
+    #the SQL Loop will cause problems,the app will down.
+    SpecNight <- as.numeric(as.character(SpecNight[6:120,]))
     DaySchedule <- as.character(DaySchedule[6:120,])
     NightSchedule <- as.character(NightSchedule[6:120,])
     
@@ -160,8 +173,10 @@ shinyServer(function(input, output,session) {
     DayDat <<- cbind(DayDat2,DayRes)
     NightDat <<- cbind(NightDat2,NightRes)
     
+    
+    
     autoInvalidate()
-    cat('Data Prepare Ready...\n',format(Sys.time(),'%m%d%H%M%S'),'\n')
+    cat('Data Prepare Ready...',format(Sys.time(),'%m-%d %H:%M:%S'),'\n')
   })
   #select box
   select2 <-
@@ -248,7 +263,7 @@ shinyServer(function(input, output,session) {
       DayDat,'Machine','1#Ply Code',fontSize = 14,nodeColour = 'orange',zoom = TRUE
     )
   })
-
+  
   #day
   output$day_FSR <- renderDataTable({
     df[c('Machine','SPEC','Schedule',select1())]
@@ -261,7 +276,7 @@ shinyServer(function(input, output,session) {
   output$day_VMI <- renderDataTable({
     dv[c('Machine','SPEC','Schedule',select1())]
   })
-
+  
   #night
   output$night_FSR <- renderDataTable({
     nf[c('Machine','SPEC','Schedule',select2())]

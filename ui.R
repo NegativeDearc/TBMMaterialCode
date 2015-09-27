@@ -9,8 +9,12 @@ if (!require('RODBC')) {
 if (!require('networkD3')) {
   install.packages('networkD3')
 }
+if(!require('shinythemes')){
+  install.packages('shinythemes')
+}
 
 shinyUI(fluidPage(
+  theme = shinytheme("flatly"),
   titlePanel(strong('TBM WIP Code Summary'),windowTitle = 'WIP Code'),
   tabsetPanel(id = 'tab',
               tabPanel('Dayshift',value = 'Dayshift',icon = icon('sun-o'),
@@ -18,7 +22,6 @@ shinyUI(fluidPage(
                        #fluid page with fluid page
                        fluidPage(
                          hr(),
-                         dateInput('date',label = 'Only Use for Nightshift(EXPERIMENTAL)',min = Sys.Date(),max = Sys.Date()+1,format = 'yyyy-mm-dd'),
                          sidebarPanel(
                            width = 2,
                            helpText(

@@ -1,4 +1,3 @@
-shiny::runApp('d:/Articals/R/get_material_code/TBMMaterialCode/',
+shiny::runApp('c:/Shinyapp/TBMMaterialCode/',
               port = 1234,
-              host = getOption('shiny.host','0.0.0.0'),
-              display.mode = 'auto')
+              host = getOption('shiny.host','0.0.0.0'))
