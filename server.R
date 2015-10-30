@@ -9,11 +9,23 @@ if (!require('networkD3')) {
 }
 ##server
 shinyServer(function(input, output,session) {
-  #every 1800 seconds.
-  autoInvalidate <- reactiveTimer(1800000, session)
+  #every 2700 seconds.
+  autoInvalidate <- reactiveTimer(2700000, session)
   #Invalidate and re-execute this reactive expression every time the
   #timer fires.
   observe({
+    #use regular expression to extract the file name------added 2015/10/31
+    base_path <- '/\\ksa008/shared/Production/Schedule_Data/Sharepoint/生管/计划日报表/15年计划日报表汇总/TBM/TBM plan/'
+    file_name <- list.files(base_path)
+    month <- as.numeric(format(Sys.time(),'%m'))#chinese location format '%b' get '十月'
+    month_abb <- month.abb[month]
+    re.test <- grepl(paste0('^(tbm)+.+',month_abb,'+.+.xlsx$'),file_name,ignore.case = TRUE)
+    #grepl('^(tbm)+.+Nov+.+.xlsx$',filename,ignore.case = TRUE)
+    if(!any(re.test)){
+      month_abb <- month.abb[month-1]
+      re.test <- grepl(paste0('^(tbm)+.+',month_abb,'+.+.xlsx$'),file_name,ignore.case = TRUE)
+    }
+    path <- paste0(base_path,file_name[re.test])
     #odbc channels
     #Make sure DSN IS FREE TO OPEN and have enough permission
     withProgress(message = 'Connecting to data sources...\n',
@@ -31,10 +43,7 @@ shinyServer(function(input, output,session) {
                    bool = 1
                    while(bool){
                      tryCatch(
-                       ch <- odbcConnectExcel2007(
-                            '/\\ksa008/shared/Technical/Projects/CKT Spec Summary/CKT Spec Summary list 2_Sheldon.xlsx',
-                            readOnly = TRUE
-                     ),
+                       ch <- odbcConnectExcel2007(path,readOnly = TRUE),
                      error = function(e){
                        cat(conditionMessage(e),'\n')
                        odbcCloseAll()
@@ -55,9 +64,6 @@ shinyServer(function(input, output,session) {
     time <- paste0(time[1],'#',time[2],'$')
     #columns names in EXCEL Begain with F
     test <- sqlQuery(ch,paste0("select \"F1\" from","\"",time,"\""))
-    #if the sheet doesn't exist,the App will shut down.
-    #So,add a if logic,if the sheet is exist,we will get data.frame from it.
-    #Else we make some fake data to keep web alive
     if(is.data.frame(test)){
       SpecDay <-
         sqlQuery(ch,paste0("select \"F3\" from","\"",time,"\""))
