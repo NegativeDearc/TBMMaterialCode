@@ -25,7 +25,8 @@ shinyServer(function(input, output,session) {
       month_abb <- month.abb[month-1]
       re.test <- grepl(paste0('^(tbm)+.+',month_abb,'+.+.xlsx$'),file_name,ignore.case = TRUE)
     }
-    path <- paste0(base_path,file_name[re.test])
+    #incase exist 2 files match the regexp ,choose the first one
+    path <- paste0(base_path,file_name[re.test][1])
     #odbc channels
     #Make sure DSN IS FREE TO OPEN and have enough permission
     withProgress(message = 'Connecting to data sources...\n',
@@ -74,23 +75,25 @@ shinyServer(function(input, output,session) {
       NightSchedule <-
         sqlQuery(ch,paste0("select \"F10\" from","\"",time,"\""))
     } else {
-      t <- data.frame(t = rep('9999',120))
+      t <- data.frame(t = rep('9999',145))
       SpecDay <- DaySchedule <- SpecNight <- NightSchedule <- t
     }
     
     #Day shift & Nightshift
-    SpecDay <- as.numeric(as.character(SpecDay[6:120,]))
+    row_length <- 6:150
+    SpecDay <- as.numeric(as.character(SpecDay[row_length,]))
     #debug 2015-9-21
     #SpecNight is a collect of number,
     #if the programm scap some non-number values like chinese
     #the SQL Loop will cause problems,the app will down.
-    SpecNight <- as.numeric(as.character(SpecNight[6:120,]))
-    DaySchedule <- as.character(DaySchedule[6:120,])
-    NightSchedule <- as.character(NightSchedule[6:120,])
+    SpecNight <- as.numeric(as.character(SpecNight[row_length,]))
+    DaySchedule <- as.character(DaySchedule[row_length,])
+    NightSchedule <- as.character(NightSchedule[row_length,])
     
-    FSR_names <- rep(paste0('FSR',1:12),each = 3)
-    DRA_names <- rep(paste0('DRA',1:7),each = 5)
-    VMI_names <- rep(paste0('VMI',1:11),each = 4)
+    #12*4+7*6+11*5 =145
+    FSR_names <- rep(paste0('FSR',1:12),each = 4)
+    DRA_names <- rep(paste0('DRA',1:7),each = 6)
+    VMI_names <- rep(paste0('VMI',1:11),each = 5)
     Machine <- c(FSR_names,DRA_names,VMI_names)
     
     #Make sure str in data.frame not convert to factors
