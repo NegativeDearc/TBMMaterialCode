@@ -112,7 +112,14 @@ shinyServer(function(input, output,session) {
     
     #delete the blank rows
     DayDat2 <- subset(DayDat1,!is.na(DayDat1['SPEC']))
+    #if the data.frame is empty,res will not be a data.frame
+    if(nrow(DayDat2) == 0){
+      DayDat2[1,] <- 0
+    }
     NightDat2 <- subset(NightDat1,!is.na(NightDat1['SPEC']))
+    if(nrow(NightDat2) == 0){
+      NightDat2[1,] <- 0
+    }
     
     #initialization
     DayRes <- vector(mode = 'list')
@@ -182,8 +189,6 @@ shinyServer(function(input, output,session) {
     DayDat <<- cbind(DayDat2,DayRes)
     NightDat <<- cbind(NightDat2,NightRes)
     
-    
-    
     autoInvalidate()
     cat('Data Prepare Ready...',format(Sys.time(),'%m-%d %H:%M:%S'),'\n')
   })
@@ -192,14 +197,17 @@ shinyServer(function(input, output,session) {
     reactive(input$checkbox2)
   select1 <-
     reactive(input$checkbox1)
-  #data subsets
-  df <- subset(DayDat,strsplit(unlist(DayDat['Machine']),'[0-9]+') == 'FSR')
-  dd <- subset(DayDat,strsplit(unlist(DayDat['Machine']),'[0-9]+') == 'DRA')
-  dv <- subset(DayDat,strsplit(unlist(DayDat['Machine']),'[0-9]+') == 'VMI')
-  nf <- subset(NightDat,strsplit(unlist(NightDat['Machine']),'[0-9]+') == 'FSR')
-  nd <- subset(NightDat,strsplit(unlist(NightDat['Machine']),'[0-9]+') == 'DRA')
-  nv <- subset(NightDat,strsplit(unlist(NightDat['Machine']),'[0-9]+') == 'VMI')
-  
+  select3 <- 
+    reactive(input$checkbox3)
+
+   #data subsets
+   df <- subset(DayDat,strsplit(unlist(DayDat['Machine']),'[0-9]+') == 'FSR')
+   dd <- subset(DayDat,strsplit(unlist(DayDat['Machine']),'[0-9]+') == 'DRA')
+   dv <- subset(DayDat,strsplit(unlist(DayDat['Machine']),'[0-9]+') == 'VMI')
+   nf <- subset(NightDat,strsplit(unlist(NightDat['Machine']),'[0-9]+') == 'FSR')
+   nd <- subset(NightDat,strsplit(unlist(NightDat['Machine']),'[0-9]+') == 'DRA')
+   nv <- subset(NightDat,strsplit(unlist(NightDat['Machine']),'[0-9]+') == 'VMI')
+    
   #dowmload sidewall
   output$sw_day <- 
     downloadHandler(
@@ -269,7 +277,7 @@ shinyServer(function(input, output,session) {
   #networkD3
   output$network <- renderSimpleNetwork({
     simpleNetwork(
-      DayDat,'Machine','1#Ply Code',fontSize = 14,nodeColour = 'orange',zoom = TRUE
+      DayDat,'Machine',select3(),fontSize = 16,nodeColour = 'orange',zoom = TRUE
     )
   })
   
