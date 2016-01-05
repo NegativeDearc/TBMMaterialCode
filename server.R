@@ -15,14 +15,18 @@ shinyServer(function(input, output,session) {
   #timer fires.
   observe({
     #use regular expression to extract the file name------added 2015/10/31
-    base_path <- '/\\ksa008/shared/Production/Schedule_Data/Sharepoint/生管/计划日报表/15年计划日报表汇总/TBM/TBM plan/'
+    base_path <- '/\\ksa008/shared/Production/Schedule_Data/Sharepoint/生管/计划日报表/16年计划日报表汇总/TBM/TBM plan/'
     file_name <- list.files(base_path)
     month <- as.numeric(format(Sys.time(),'%m'))#chinese location format '%b' get '十月'
     month_abb <- month.abb[month]
     re.test <- grepl(paste0('^(tbm)+.+',month_abb,'+.+.xlsx$'),file_name,ignore.case = TRUE)
     #grepl('^(tbm)+.+Nov+.+.xlsx$',filename,ignore.case = TRUE)
     if(!any(re.test)){
-      month_abb <- month.abb[month-1]
+      if(month_abb == 'Jan'){
+        month_abb = 'Dec'
+      } else{
+        month_abb <- month.abb[month-1]
+      }
       re.test <- grepl(paste0('^(tbm)+.+',month_abb,'+.+.xlsx$'),file_name,ignore.case = TRUE)
     }
     #incase exist 2 files match the regexp ,choose the first one
