@@ -19,15 +19,15 @@ shinyServer(function(input, output,session) {
     file_name <- list.files(base_path)
     month <- as.numeric(format(Sys.time(),'%m'))#chinese location format '%b' get '十月'
     month_abb <- month.abb[month]
-    re.test <- grepl(paste0('^(tbm)+.+',month_abb,'+.+.xlsx$'),file_name,ignore.case = TRUE)
-    #grepl('^(tbm)+.+Nov+.+.xlsx$',filename,ignore.case = TRUE)
+    re.test <- grepl(paste0('^[tbm|copy]+.+',month_abb,'+.+.xlsx$'),file_name,ignore.case = TRUE)
+    #grepl('tbm+.+Nov+.+.xlsx$',filename,ignore.case = TRUE)
     if(!any(re.test)){
       if(month_abb == 'Jan'){
         month_abb = 'Dec'
       } else{
         month_abb <- month.abb[month-1]
       }
-      re.test <- grepl(paste0('^(tbm)+.+',month_abb,'+.+.xlsx$'),file_name,ignore.case = TRUE)
+      re.test <- grepl(paste0('^[tbm|copy]+.+',month_abb,'+.+.xlsx$'),file_name,ignore.case = TRUE)
     }
     #incase exist 2 files match the regexp ,choose the first one
     path <- paste0(base_path,file_name[re.test][1])
